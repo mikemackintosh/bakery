@@ -64,13 +64,15 @@ func (d *Shell) Bake() {
 
 	cli.Debug(cli.INFO, fmt.Sprintf("Running script %s", tmpFile), err)
 
-	_, err = RunCommand([]string{
+	o, err := RunCommand([]string{
 		"/bin/bash",
 		"-c",
 		tmpFile})
 	if err != nil {
 		cli.Debug(cli.ERROR, fmt.Sprintf("Error running %s", tmpFile), err)
 	}
+
+	cli.Debug(cli.INFO, "\t->", o.String())
 }
 
 // TestRunCommandOutput used to evaluate a successful test
