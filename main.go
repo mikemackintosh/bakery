@@ -20,8 +20,9 @@ type Variable struct {
 }
 
 type Bakery struct {
-	Variables []*Variable   `hcl:"variable,block"`
-	Dmgs      []*pantry.Dmg `hcl:"dmg,block"`
+	Variables []*Variable     `hcl:"variable,block"`
+	Dmgs      []*pantry.Dmg   `hcl:"dmg,block"`
+	Shells    []*pantry.Shell `hcl:"shell,block"`
 }
 
 func main() {
@@ -86,6 +87,11 @@ func main() {
 
 	//var runList map[string]interface{}
 	for _, entry := range bakery.Dmgs {
+		entry.Parse(evalContext)
+		entry.Bake()
+	}
+	//var runList map[string]interface{}
+	for _, entry := range bakery.Shells {
 		entry.Parse(evalContext)
 		entry.Bake()
 	}

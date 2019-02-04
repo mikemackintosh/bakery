@@ -1,15 +1,77 @@
 package pantry
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcldec"
+	"github.com/mikemackintosh/bakery/cli"
+	"github.com/mikemackintosh/bakery/config"
+	"github.com/zclconf/go-cty/cty"
 )
+
+type Shell struct {
+	PantryItem
+	Name      string   `hcl:"name,label"`
+	Config    hcl.Body `hcl:",remain"`
+	Script    string   `json:"script"`
+	DependsOn []string `json:"depends_on"`
+}
+
+// identifies the DMG spec
+var shellSpec = &hcldec.ObjectSpec{
+	"depends_on": dependsOn,
+	"script": &hcldec.AttrSpec{
+		Name:     "script",
+		Required: true,
+		Type:     cty.String,
+	},
+}
+
+//
+func (d *Shell) Parse(evalContext *hcl.EvalContext) error {
+	cli.Debug(cli.INFO, "Preparing Shell", d.Name)
+	cfg, diags := hcldec.Decode(d.Config, shellSpec, evalContext)
+	if len(diags) != 0 {
+		for _, diag := range diags {
+			cli.Debug(cli.INFO, "\t#", diag)
+		}
+		return fmt.Errorf("%s", diags.Errs()[0])
+	}
+
+	err := d.Populate(cfg, d)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *Shell) Bake() {
+	var tmpFile = config.Registry.TempDir + fmt.Sprintf("/%x.sh", sha256.Sum256([]byte(d.Script)))[:14]
+	err := ioutil.WriteFile(tmpFile, []byte(d.Script), 0744)
+	if err != nil {
+		cli.Debug(cli.ERROR, fmt.Sprintf("Error writing script to %s", tmpFile), err)
+	}
+
+	cli.Debug(cli.INFO, fmt.Sprintf("Running script %s", tmpFile), err)
+
+	_, err = RunCommand([]string{
+		"/bin/bash",
+		"-c",
+		tmpFile})
+	if err != nil {
+		cli.Debug(cli.ERROR, fmt.Sprintf("Error running %s", tmpFile), err)
+	}
+}
 
 // TestRunCommandOutput used to evaluate a successful test
 var TestRunCommandOutput = `Result
