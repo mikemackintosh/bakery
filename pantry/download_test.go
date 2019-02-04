@@ -18,7 +18,7 @@ var testDownloadFile = []struct {
 }
 
 func TestDownloadFile(t *testing.T) {
-	http.Handle("/test_download.txt", http.FileServer(http.Dir("../testing/")))
+	http.Handle("/test_download.txt", http.FileServer(http.Dir("../testing/fixtures/www")))
 	go http.ListenAndServe("localhost:3000", nil)
 
 	for _, test := range testDownloadFile {
