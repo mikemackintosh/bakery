@@ -27,14 +27,14 @@ var dependsOn = &hcldec.AttrSpec{
 type PantryItem struct{}
 
 func (p PantryItem) Populate(cfg cty.Value, obj interface{}) error {
-	cli.Debug(cli.DEBUG, "\t->Populating Config", cfg)
-	cli.Debug(cli.DEBUG, "\t->Populating Receiving Object", obj)
-	out, err := json.Marshal(ctyjson.SimpleJSONValue{cfg})
+	cli.Debug(cli.DEBUG3, "\t->Populating Config", cfg)
+	cli.Debug(cli.DEBUG2, "\t->Populating Receiving Object", obj)
+	out, err := json.Marshal(ctyjson.SimpleJSONValue{Value: cfg})
 	if err != nil {
 		return err
 	}
 
-	cli.Debug(cli.DEBUG, "\t->Compiled Object", string(out))
+	cli.Debug(cli.DEBUG2, "\t->Compiled Object", string(out))
 	err = json.Unmarshal(out, obj)
 	if err != nil {
 		return err
