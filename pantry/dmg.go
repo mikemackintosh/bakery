@@ -1,0 +1,146 @@
+package pantry
+
+import (
+	"fmt"
+	"net/url"
+	"strings"
+
+	"github.com/hashicorp/hcl2/hcl"
+	"github.com/hashicorp/hcl2/hcldec"
+	"github.com/mikemackintosh/bakery/cli"
+	"github.com/mikemackintosh/bakery/config"
+	"github.com/zclconf/go-cty/cty"
+)
+
+type Dmg struct {
+	PantryItem
+	Name           string   `hcl:"name,label"`
+	Config         hcl.Body `hcl:",remain"`
+	AcceptEula     bool     `json:"accept_eula"`
+	AllowUntrusted bool     `json:"allow_untrusted"`
+	Checksum       string   `json:"checksum"`
+	App            *string  `json:"app"`
+	Destination    string   `json:"destination"`
+	Source         string   `json:"source"`
+	DependsOn      []string `json:"depends_on"`
+}
+
+// identifies the DMG spec
+var dmgSpec = &hcldec.ObjectSpec{
+	"depends_on": dependsOn,
+	"source": &hcldec.AttrSpec{
+		Name:     "source",
+		Required: true,
+		Type:     cty.String,
+	},
+	"app": &hcldec.AttrSpec{
+		Name:     "app",
+		Required: false,
+		Type:     cty.String,
+	},
+	"checksum": &hcldec.AttrSpec{
+		Name:     "checksum",
+		Required: true,
+		Type:     cty.String,
+	},
+	"accept_eula": &hcldec.AttrSpec{
+		Name:     "accept_eula",
+		Required: false,
+		Type:     cty.Bool,
+	},
+	"destination": &hcldec.AttrSpec{
+		Name:     "destination",
+		Required: false,
+		Type:     cty.String,
+	},
+	"allow_untrusted": &hcldec.AttrSpec{
+		Name:     "allow_untrusted",
+		Required: false,
+		Type:     cty.Bool,
+	},
+}
+
+func (d *Dmg) Parse(evalContext *hcl.EvalContext) error {
+	cli.Debug(cli.INFO, "Preparing DMG", d.Name)
+	cfg, diags := hcldec.Decode(d.Config, dmgSpec, evalContext)
+	if len(diags) != 0 {
+		for _, diag := range diags {
+			cli.Debug(cli.INFO, "\t#", diag)
+		}
+		return fmt.Errorf("%s", diags.Errs()[0])
+	}
+
+	err := d.Populate(cfg, d)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *Dmg) Bake() {
+	u, err := url.Parse(d.Source)
+	if err != nil {
+		cli.Debug(cli.INFO, fmt.Sprintf("Error finding source %s", d.Source), err)
+	}
+
+	var tmpFile string
+	if u.Scheme == "http" || u.Scheme == "https" {
+		cli.Debug(cli.DEBUG, "\t-> Using HTTP(s) source for download", nil)
+
+		urlParse, err := url.Parse(d.Source)
+		if err != nil {
+			cli.Debug(cli.INFO, fmt.Sprintf("Error finding source %s", d.Source), err)
+		}
+
+		tmpFile = config.Registry.TempDir + urlParse.Path
+		err = DownloadFile(d.Source, tmpFile, d.Checksum)
+		if err != nil {
+			cli.Debug(cli.INFO, fmt.Sprintf("Error downloading file %s", d.Source), err)
+		}
+	}
+
+	// Mount it
+	var mountpoint = fmt.Sprintf("/Volumes/%s", d.Name)
+	cli.Debug(cli.INFO, fmt.Sprintf("Mounting %s", tmpFile), err)
+	hdiutilBinary := "/usr/bin/hdiutil"
+	o, err := RunCommand([]string{
+		hdiutilBinary,
+		"attach",
+		strings.Replace(tmpFile, " ", "\\ ", -1),
+		"-nobrowse",
+		"-mountpoint",
+		mountpoint})
+	if err != nil {
+		cli.Debug(cli.ERROR, fmt.Sprintf("Error mounting %s to %s", tmpFile, mountpoint), err)
+		cli.Debug(cli.ERROR, "a", o.Raw)
+	}
+
+	// Rsync the app from the mounted DMG to the destination folder
+	var appName = d.Name
+	if d.App != nil {
+		appName = *d.App
+	}
+	cli.Debug(cli.INFO, fmt.Sprintf("Installing %s to %s", tmpFile, d.Destination), err)
+	_, err = RunCommand([]string{
+		"/usr/bin/rsync",
+		"--force",
+		"--recursive",
+		"--links",
+		"--perms",
+		"--executability",
+		"--owner",
+		"--group",
+		"--times",
+		fmt.Sprintf("%s/%s.app", mountpoint, appName),
+		d.Destination})
+	if err != nil {
+		cli.Debug(cli.INFO, fmt.Sprintf("Error downloading file %s", d.Source), err)
+	}
+
+	// unmount the DMG after copying it over
+	_, err = RunCommand([]string{hdiutilBinary, "unmount", mountpoint})
+	if err != nil {
+		cli.Debug(cli.INFO, "Error unmounting", err)
+	}
+}
