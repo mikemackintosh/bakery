@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
+	"syscall"
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/hcl2/hcl"
@@ -72,17 +74,18 @@ func (d *Shell) Bake() {
 		cli.Debug(cli.ERROR, fmt.Sprintf("Error running %s", tmpFile), err)
 	}
 
-	cli.Debug(cli.INFO, "\t->", o.String())
+	if len(o.String()) == 0 {
+		cli.Debug(cli.DEBUG, "\t-> ", o.ExitCode)
+		return
+	}
+	cli.Debug(cli.DEBUG, "\t-> ", o.String())
 }
 
-// TestRunCommandOutput used to evaluate a successful test
-var TestRunCommandOutput = `Result
-FOO:BAR`
-
 type CommandResponse struct {
-	Command *exec.Cmd
-	Raw     string
-	Error   string
+	Command  *exec.Cmd
+	Raw      string
+	Error    string
+	ExitCode int
 }
 
 // StreamCommand will stream the output of the command to the specified buffer with
@@ -144,8 +147,14 @@ func copyOutputAndCapture(w io.Writer, r io.Reader, prefix string, c color.Attri
 	}
 }
 
+// TestRunCommandOutput used to evaluate a successful test
+var TestRunCommandOutput = `Result
+FOO:BAR`
+
 // RunCommand returns true if the audit passed, or command was successful
 func RunCommand(cmdArgs []string) (*CommandResponse, error) {
+	var exitCode int
+
 	if os.Getenv("GO_WANT_HELPER_PROCESS") == "1" {
 		return &CommandResponse{
 			Command: nil,
@@ -154,15 +163,36 @@ func RunCommand(cmdArgs []string) (*CommandResponse, error) {
 	}
 
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:len(cmdArgs)]...)
-	res, err := cmd.Output()
+	res, err := cmd.CombinedOutput()
+	if err != nil {
+		// try to get the exit code
+		if exitError, ok := err.(*exec.ExitError); ok {
+			ws := exitError.Sys().(syscall.WaitStatus)
+			exitCode = ws.ExitStatus()
+		} else {
+			exitCode = 1
+		}
+	} else {
+		// success, exitCode should be 0 if go is ok
+		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
+		exitCode = ws.ExitStatus()
+	}
+
 	return &CommandResponse{
-		Command: cmd,
-		Raw:     strings.TrimSpace(string(res)),
+		Command:  cmd,
+		Raw:      strings.TrimSpace(string(res)),
+		ExitCode: exitCode,
 	}, err
 }
 
 func (r *CommandResponse) String() string {
 	return r.Raw
+}
+
+// FoormattedString returns an intented, formatted string
+func (r *CommandResponse) FormattedString() string {
+	var rx = regexp.MustCompile("(?m)^")
+	return rx.ReplaceAllString(r.Raw, "\t\t")
 }
 
 // ByLine will split the command output by line
