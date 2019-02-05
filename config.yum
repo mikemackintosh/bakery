@@ -33,4 +33,5 @@ git "dotfiles" {
   source = "https://github.com/mikemackintosh/dotfiles"
   destination = "~/.dotfiles_test"
   branch = "master"
+  depends_on = "Accept Xcode License"
 }
