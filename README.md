@@ -42,3 +42,25 @@ git "dotfiles" {
   depends_on = "Accept Xcode License"
 }
 ```
+
+The above configuration produces the following results:
+
+```
+$ make build && sudo ./bin/bakery -d
+go build -o bin/bakery main.go
+[   INFO ] Preparing DMG: Alfred 3
+[   INFO ] Preparing DMG: Google Chrome
+[   INFO ] Preparing Shell: Accept Xcode License
+[   INFO ] Preparing zip: Dash
+[   INFO ] Preparing git: dotfiles
+[   INFO ] Baking: Google Chrome
+[   INFO ] 	-> Package already exists: /Applications/Google Chrome.app
+[   INFO ] Baking: Accept Xcode License
+[   INFO ] 	-> Running script /var/bakery/tmp/c35f39bb15bcb
+[   INFO ] Baking: Dash
+[   INFO ] 	-> Skipping due to matched not_if
+[   INFO ] Baking: dotfiles
+[   INFO ] 	-> Directory already exists
+[   INFO ] Baking: Alfred 3
+[   INFO ] 	-> Package already exists: /Applications/Alfred 3.app
+```
