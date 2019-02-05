@@ -83,7 +83,6 @@ func init() {
 }
 
 func TestGenerate(test *testing.T) {
-	fmt.Println("Testing sfasdfsfs")
 	flag.Parse()
 
 	if len(moduleName) == 0 {
