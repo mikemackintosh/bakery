@@ -73,7 +73,7 @@ func (p *Zip) Bake() {
 	if p.NotIf != nil {
 		o, err := RunCommand([]string{"sh", "-c", *p.NotIf})
 		if err != nil {
-			cli.Debug(cli.ERROR, fmt.Sprintf("\t-> Error finding source %s", p.Source), err)
+			cli.Debug(cli.ERROR, fmt.Sprintf("\t-> Error running not_if %s, response: %s", *p.NotIf, o.FormattedString()), err)
 		}
 
 		if o.ExitCode == 0 {
@@ -85,7 +85,7 @@ func (p *Zip) Bake() {
 	if p.OnlyIf != nil {
 		o, err := RunCommand([]string{"sh", "-c", *p.OnlyIf})
 		if err != nil {
-			cli.Debug(cli.ERROR, fmt.Sprintf("\t-> Error finding source %s", p.Source), err)
+			cli.Debug(cli.ERROR, fmt.Sprintf("\t-> Error running only_if %s, response: %s", *p.NotIf, o.FormattedString()), err)
 		}
 
 		if o.ExitCode != 0 {
