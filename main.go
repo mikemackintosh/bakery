@@ -25,6 +25,7 @@ type Bakery struct {
 	Pkgs      []*pantry.Pkg   `hcl:"pkg,block"`
 	Shells    []*pantry.Shell `hcl:"shell,block"`
 	Zips      []*pantry.Zip   `hcl:"zip,block"`
+	Gits      []*pantry.Git   `hcl:"git,block"`
 }
 
 type Runlist map[string]interface{}
@@ -119,6 +120,11 @@ func main() {
 	}
 
 	for _, entry := range bakery.Zips {
+		entry.Parse(evalContext)
+		runList.Add(entry.Name, entry)
+	}
+
+	for _, entry := range bakery.Gits {
 		entry.Parse(evalContext)
 		runList.Add(entry.Name, entry)
 	}
