@@ -63,7 +63,7 @@ func (p *Shell) Bake() {
 		cli.Debug(cli.ERROR, fmt.Sprintf("Error writing script to %s", tmpFile), err)
 	}
 
-	cli.Debug(cli.INFO, fmt.Sprintf("Running script %s", tmpFile), err)
+	cli.Debug(cli.INFO, fmt.Sprintf("\t-> Running script %s", tmpFile), err)
 
 	o, err := RunCommand([]string{
 		"/bin/bash",
