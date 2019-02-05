@@ -55,7 +55,6 @@ var gitSpec = NewPantrySpec(&hcldec.ObjectSpec{
 // Parse the confgiuration with the provided spec
 func (p *Git) Parse(evalContext *hcl.EvalContext) error {
 	cli.Debug(cli.INFO, "Preparing git", p.Name)
-	fmt.Printf("gitSpec: %#v\n", gitSpec)
 	cfg, diags := hcldec.Decode(p.Config, gitSpec, evalContext)
 	if len(diags) != 0 {
 		for _, diag := range diags {
