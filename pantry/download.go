@@ -29,8 +29,8 @@ func DownloadFile(source, destination string, checksum interface{}) error {
 			}
 
 			fileHash := hex.EncodeToString(hash.Sum(nil))
-			if fileHash != checksum {
-				cli.Debug(cli.INFO, fmt.Sprintf("\t-> File with hash %s detected, but want %s, removing...", fileHash, checksum), nil)
+			if fileHash != *checksum.(*string) {
+				cli.Debug(cli.INFO, fmt.Sprintf("\t-> File with hash %s detected, but want %s, removing...", fileHash, *checksum.(*string)), nil)
 				err := os.RemoveAll(destination)
 				if err != nil {
 					return fmt.Errorf("Error removing invalidated file: %s", err)
@@ -77,8 +77,8 @@ func DownloadFile(source, destination string, checksum interface{}) error {
 
 	fileChecksum := hex.EncodeToString(hash.Sum(nil))
 	if checksum != nil {
-		if checksum.(string) != fileChecksum {
-			return fmt.Errorf("Failed to validate file. Want %s but have %s", checksum, fileChecksum)
+		if *checksum.(*string) != fileChecksum {
+			return fmt.Errorf("Failed to validate file. Want %s but have %s", *checksum.(*string), fileChecksum)
 		}
 	}
 

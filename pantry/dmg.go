@@ -119,7 +119,7 @@ func (d *Dmg) Bake() {
 		}
 
 		tmpFile = config.Registry.TempDir + "/" + path.Base(urlParse.Path)
-		urlErr = DownloadFile(d.Source, tmpFile, *d.Checksum)
+		urlErr = DownloadFile(d.Source, tmpFile, d.Checksum)
 		if urlErr != nil {
 			cli.Debug(cli.INFO, fmt.Sprintf("Error downloading file %s", d.Source), urlErr)
 		}

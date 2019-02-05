@@ -21,3 +21,18 @@ dmg "Google Chrome" {
   source = "https://dl.google.com/chrome/mac/stable/CHFA/googlechrome.dmg"
   checksum = "7f9ae76a661f7b9d40f7e46d5f846d60deefecedebcd5ddc34fba1b05ee2fc6c"
 }
+
+// Install dash from their website (.app bundle within the zip)
+zip "Dash" {
+  source = "https://sanfrancisco.kapeli.com/downloads/v4/Dash.zip"
+  checksum = "802c5a63ac72c94ae4c6481529f11795c35f316d3607c9946f777f447b670c50"
+  destination = "/Applications/"
+}
+
+/*
+git "dotfiles" {
+  source = "https://github.com/mikemackintosh/dotfiles"
+  destination = "~/.dotfiles_test"
+  branch = master
+}
+*/
