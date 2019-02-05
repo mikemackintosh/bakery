@@ -30,8 +30,7 @@ type Zip struct {
 }
 
 // Identifies the zip spec
-var zipSpec = &hcldec.ObjectSpec{
-	"depends_on": dependsOn,
+var zipSpec = NewPantrySpec(&hcldec.ObjectSpec{
 	"source": &hcldec.AttrSpec{
 		Name:     "source",
 		Required: true,
@@ -47,7 +46,7 @@ var zipSpec = &hcldec.ObjectSpec{
 		Required: false,
 		Type:     cty.String,
 	},
-}
+})
 
 // Parse the confgiuration with the provided spec
 func (p *Zip) Parse(evalContext *hcl.EvalContext) error {

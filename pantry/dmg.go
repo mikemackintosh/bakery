@@ -18,17 +18,17 @@ type Dmg struct {
 	PantryItem
 	Name           string   `hcl:"name,label"`
 	Config         hcl.Body `hcl:",remain"`
+	App            *string  `json:"app"`
+	Source         string   `json:"source"`
+	Destination    *string  `json:"destination"`
+	Checksum       *string  `json:"checksum"`
 	AcceptEula     bool     `json:"accept_eula"`
 	AllowUntrusted bool     `json:"allow_untrusted"`
-	Checksum       *string  `json:"checksum"`
-	App            *string  `json:"app"`
-	Destination    *string  `json:"destination"`
-	Source         string   `json:"source"`
+	Force          bool     `json:"force"`
 }
 
 // identifies the DMG spec
-var dmgSpec = &hcldec.ObjectSpec{
-	"depends_on": dependsOn,
+var dmgSpec = NewPantrySpec(&hcldec.ObjectSpec{
 	"source": &hcldec.AttrSpec{
 		Name:     "source",
 		Required: true,
@@ -59,7 +59,12 @@ var dmgSpec = &hcldec.ObjectSpec{
 		Required: false,
 		Type:     cty.Bool,
 	},
-}
+	"force": &hcldec.AttrSpec{
+		Name:     "force",
+		Required: false,
+		Type:     cty.Bool,
+	},
+})
 
 // GetDestination will get or return the default destination
 func (p *Dmg) GetDestination() string {
@@ -103,7 +108,7 @@ func (p *Dmg) Bake() {
 	// Sets the app name with the .app extension
 	var appNameWithExt = appName + ".app"
 
-	if FileExists(p.GetDestination() + appNameWithExt) {
+	if FileExists(p.GetDestination()+appNameWithExt) && !p.Force {
 		cli.Debug(cli.INFO, "\t-> Package already exists", p.GetDestination()+appNameWithExt)
 		return
 	}

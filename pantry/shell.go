@@ -28,16 +28,15 @@ type Shell struct {
 }
 
 // identifies the DMG spec
-var shellSpec = &hcldec.ObjectSpec{
-	"depends_on": dependsOn,
+var shellSpec = NewPantrySpec(&hcldec.ObjectSpec{
 	"script": &hcldec.AttrSpec{
 		Name:     "script",
 		Required: true,
 		Type:     cty.String,
 	},
-}
+})
 
-//
+// Parse will parse the configuration for this block type
 func (p *Shell) Parse(evalContext *hcl.EvalContext) error {
 	cli.Debug(cli.INFO, "Preparing Shell", p.Name)
 	cfg, diags := hcldec.Decode(p.Config, shellSpec, evalContext)

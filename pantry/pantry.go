@@ -20,15 +20,45 @@ type PantryInterface interface {
 	GetDependencies() []string
 }
 
-// dependsOn is the global depends on definition
 var dependsOn = &hcldec.AttrSpec{
 	Name:     "depends_on",
 	Required: false,
 	Type:     cty.String,
 }
 
+var defaultSpec = &hcldec.ObjectSpec{
+	"depends_on": &hcldec.AttrSpec{
+		Name:     "depends_on",
+		Required: false,
+		Type:     cty.String,
+	},
+	"not_if": &hcldec.AttrSpec{
+		Name:     "not_if",
+		Required: false,
+		Type:     cty.String,
+	},
+	"only_if": &hcldec.AttrSpec{
+		Name:     "only_if",
+		Required: false,
+		Type:     cty.String,
+	},
+}
+
+// NewPantrySpec appends the default spec fields to a pantry item spec
+func NewPantrySpec(spec *hcldec.ObjectSpec) *hcldec.ObjectSpec {
+	// Loop through the default spec and append it to
+	// the provided spec.
+	for k, v := range *defaultSpec {
+		(*spec)[k] = v
+	}
+
+	return spec
+}
+
 type PantryItem struct {
 	DependsOn string `json:"depends_on"`
+	NotIf     string `json:"not_if"`
+	OnlyIf    string `json:"only_if"`
 	IsPrepped bool
 	IsBaked   bool
 }
@@ -53,19 +83,19 @@ func (p *PantryItem) GetDependencies() []string {
 }
 
 func (p *PantryItem) Populate(cfg cty.Value, obj interface{}) error {
-	cli.Debug(cli.DEBUG3, "\t->Populating Config", cfg)
-	cli.Debug(cli.DEBUG2, "\t->Populating Receiving Object", obj)
+	cli.Debug(cli.DEBUG3, "\t#=> Populating Config", cfg)
+	cli.Debug(cli.DEBUG2, "\t#=> Populating Receiving Object", obj)
 	out, err := json.Marshal(ctyjson.SimpleJSONValue{Value: cfg})
 	if err != nil {
 		return err
 	}
 
-	cli.Debug(cli.DEBUG2, "\t->Compiled Object", string(out))
+	cli.Debug(cli.DEBUG2, "\t#=> Compiled Object", string(out))
 	err = json.Unmarshal(out, obj)
 	if err != nil {
 		return fmt.Errorf("Error compiling configuartion: %s", err)
 	}
 
-	cli.Debug(cli.DEBUG2, "\t->Resulting Object", obj)
+	cli.Debug(cli.DEBUG2, "\t#=> Resulting Object", obj)
 	return nil
 }

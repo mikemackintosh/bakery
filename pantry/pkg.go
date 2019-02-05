@@ -19,14 +19,13 @@ type Pkg struct {
 }
 
 // Identifies the pkg spec
-var pkgSpec = &hcldec.ObjectSpec{
-	"depends_on": dependsOn,
+var pkgSpec = NewPantrySpec(&hcldec.ObjectSpec{
 	"source": &hcldec.AttrSpec{
 		Name:     "source",
 		Required: true,
 		Type:     cty.String,
 	},
-}
+})
 
 // Parse the confgiuration with the provided spec
 func (p *Pkg) Parse(evalContext *hcl.EvalContext) error {

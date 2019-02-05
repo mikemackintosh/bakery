@@ -37,19 +37,18 @@ import (
 type {{.Name | exported}} struct {
 	PantryItem
 	Name           string   ` + "`hcl:\"name,label\"`\n" +
-	`	Config         hcl.Body ` + "`hcl:\",remain\"`\n" +
-	`	DependsOn      []string ` + "`json:\"depends_on\"`\n" +
-	`}
+	`		Config         hcl.Body ` + "`hcl:\",remain\"`\n" +
+	`		Source         string ` + "`json:\"source\"`\n" +
+	`	}
 
 // Identifies the {{.Name}} spec
-var {{.Name | lower}}Spec = &hcldec.ObjectSpec{
-	"depends_on": dependsOn,
+var {{.Name | lower}}Spec = NewPantrySpec(&hcldec.ObjectSpec{
 	"source": &hcldec.AttrSpec{
 		Name:     "source",
 		Required: true,
 		Type:     cty.String,
 	},
-}
+})
 
 
 // Parse the confgiuration with the provided spec

@@ -29,8 +29,7 @@ type Git struct {
 }
 
 // Identifies the git spec
-var gitSpec = &hcldec.ObjectSpec{
-	"depends_on": dependsOn,
+var gitSpec = NewPantrySpec(&hcldec.ObjectSpec{
 	"source": &hcldec.AttrSpec{
 		Name:     "source",
 		Required: true,
@@ -51,11 +50,12 @@ var gitSpec = &hcldec.ObjectSpec{
 		Required: false,
 		Type:     cty.Bool,
 	},
-}
+})
 
 // Parse the confgiuration with the provided spec
 func (p *Git) Parse(evalContext *hcl.EvalContext) error {
 	cli.Debug(cli.INFO, "Preparing git", p.Name)
+	fmt.Printf("gitSpec: %#v\n", gitSpec)
 	cfg, diags := hcldec.Decode(p.Config, gitSpec, evalContext)
 	if len(diags) != 0 {
 		for _, diag := range diags {
@@ -86,11 +86,19 @@ func (p *Git) Bake() {
 		cli.Debug(cli.ERROR, "\t-> Error cloning: ", err)
 	}
 
+	// If the target directory already exists, we can't install the repo
+	if FileExists(destination) {
+		cli.Debug(cli.INFO, "\t-> Directory already exists", nil)
+		return
+	}
+
+	// Set the default options
 	var options = &git.CloneOptions{
 		URL:      p.Source,
 		Progress: os.Stdout,
 	}
 
+	// If we want a specific branch, set it here
 	if p.Branch != nil && len(*p.Branch) > 0 {
 		options.ReferenceName = plumbing.NewBranchReferenceName(*p.Branch)
 	}
