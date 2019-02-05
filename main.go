@@ -22,7 +22,14 @@ type Variable struct {
 type Bakery struct {
 	Variables []*Variable     `hcl:"variable,block"`
 	Dmgs      []*pantry.Dmg   `hcl:"dmg,block"`
+	Pkgs      []*pantry.Pkg   `hcl:"pkg,block"`
 	Shells    []*pantry.Shell `hcl:"shell,block"`
+}
+
+type Runlist map[string]interface{}
+
+func (rl *Runlist) Add(name string, pi pantry.PantryInterface) {
+	(*rl)[name] = pi
 }
 
 func main() {
@@ -85,14 +92,35 @@ func main() {
 		},
 	}
 
-	//var runList map[string]interface{}
+	var runList = &Runlist{}
+	/*
+		rootVal := reflect.ValueOf(bakery)
+		for i := 0; i < rootVal.NumField(); i++ {
+			valueField := rootVal.Field(i)
+			typeField := rootVal.Type().Field(i)
+			typeField.Name
+		}
+	*/
+
 	for _, entry := range bakery.Dmgs {
 		entry.Parse(evalContext)
-		entry.Bake()
+		runList.Add(entry.Name, entry)
 	}
-	//var runList map[string]interface{}
+
 	for _, entry := range bakery.Shells {
 		entry.Parse(evalContext)
-		entry.Bake()
+		runList.Add(entry.Name, entry)
+	}
+
+	for _, entry := range bakery.Pkgs {
+		entry.Parse(evalContext)
+		runList.Add(entry.Name, entry)
+	}
+
+	for name, module := range *runList {
+		cli.Debug(cli.INFO, "Baking", name)
+		module.(pantry.PantryInterface).Bake()
 	}
 }
+
+// func checkIfDepends()

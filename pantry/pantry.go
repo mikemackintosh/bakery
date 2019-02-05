@@ -3,19 +3,17 @@ package pantry
 import (
 	"encoding/json"
 
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcldec"
 	"github.com/mikemackintosh/bakery/cli"
 	"github.com/zclconf/go-cty/cty"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 )
 
-/*
 type PantryInterface interface {
-	Parse()
-	Prepare()
+	Parse(*hcl.EvalContext) error
 	Bake()
 }
-*/
 
 // dependsOn is the global depends on definition
 var dependsOn = &hcldec.AttrSpec{
