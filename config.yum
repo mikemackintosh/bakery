@@ -14,7 +14,6 @@ EOT
 dmg "Alfred 3" {
   source = "https://cachefly.alfredapp.com/Alfred_3.8_959.dmg"
   checksum = "1dd15f3063913c22a53eea07f8ffb9b02a61d691416df21f61a57537461da4d5"
-  force = true
 }
 
 // Download and install the Google Chrome dmg image
@@ -28,6 +27,7 @@ zip "Dash" {
   source = "https://sanfrancisco.kapeli.com/downloads/v4/Dash.zip"
   checksum = "802c5a63ac72c94ae4c6481529f11795c35f316d3607c9946f777f447b670c50"
   destination = "/Applications/"
+  not_if = "ls -la /Applications/ | grep 'Dash.app'"
 }
 
 git "dotfiles" {

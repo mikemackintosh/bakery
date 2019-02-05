@@ -69,9 +69,34 @@ func (p *Zip) Parse(evalContext *hcl.EvalContext) error {
 
 // Bake will action the configuration
 func (p *Zip) Bake() {
+	// TODO: clean this up and refactor it to make it re-usable
+	if p.NotIf != nil {
+		o, err := RunCommand([]string{"sh", "-c", *p.NotIf})
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("\t-> Error finding source %s", p.Source), err)
+		}
+
+		if o.ExitCode == 0 {
+			cli.Debug(cli.INFO, "\t-> Skipping due to matched not_if", nil)
+			return
+		}
+	}
+
+	if p.OnlyIf != nil {
+		o, err := RunCommand([]string{"sh", "-c", *p.OnlyIf})
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("\t-> Error finding source %s", p.Source), err)
+		}
+
+		if o.ExitCode != 0 {
+			cli.Debug(cli.INFO, "\t-> Skipping due to matched only_if", nil)
+			return
+		}
+	}
+
 	u, err := url.Parse(p.Source)
 	if err != nil {
-		cli.Debug(cli.INFO, fmt.Sprintf("Error finding source %s", p.Source), err)
+		cli.Debug(cli.ERROR, fmt.Sprintf("Error finding source %s", p.Source), err)
 	}
 
 	var tmpFile string

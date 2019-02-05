@@ -56,9 +56,9 @@ func NewPantrySpec(spec *hcldec.ObjectSpec) *hcldec.ObjectSpec {
 }
 
 type PantryItem struct {
-	DependsOn string `json:"depends_on"`
-	NotIf     string `json:"not_if"`
-	OnlyIf    string `json:"only_if"`
+	DependsOn string  `json:"depends_on"`
+	NotIf     *string `json:"not_if"`
+	OnlyIf    *string `json:"only_if"`
 	IsPrepped bool
 	IsBaked   bool
 }
