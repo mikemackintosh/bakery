@@ -14,9 +14,8 @@ import (
 // Pkg is a pkg object
 type Pkg struct {
 	PantryItem
-	Name      string   `hcl:"name,label"`
-	Config    hcl.Body `hcl:",remain"`
-	DependsOn []string `json:"depends_on"`
+	Name   string   `hcl:"name,label"`
+	Config hcl.Body `hcl:",remain"`
 }
 
 // Identifies the pkg spec
@@ -50,5 +49,4 @@ func (p *Pkg) Parse(evalContext *hcl.EvalContext) error {
 
 // Bake will action the configuration
 func (p *Pkg) Bake() {
-	//
 }

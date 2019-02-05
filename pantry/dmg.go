@@ -24,7 +24,6 @@ type Dmg struct {
 	App            *string  `json:"app"`
 	Destination    *string  `json:"destination"`
 	Source         string   `json:"source"`
-	DependsOn      []string `json:"depends_on"`
 }
 
 // identifies the DMG spec
@@ -63,9 +62,9 @@ var dmgSpec = &hcldec.ObjectSpec{
 }
 
 // GetDestination will get or return the default destination
-func (d *Dmg) GetDestination() string {
-	if d.Destination != nil {
-		destination := *d.Destination
+func (p *Dmg) GetDestination() string {
+	if p.Destination != nil {
+		destination := *p.Destination
 		if string(destination[len(destination)-1]) != "/" {
 			destination = destination + "/"
 		}
@@ -76,9 +75,9 @@ func (d *Dmg) GetDestination() string {
 }
 
 // Parse will parse the config with the spec
-func (d *Dmg) Parse(evalContext *hcl.EvalContext) error {
-	cli.Debug(cli.INFO, "Preparing DMG", d.Name)
-	cfg, diags := hcldec.Decode(d.Config, dmgSpec, evalContext)
+func (p *Dmg) Parse(evalContext *hcl.EvalContext) error {
+	cli.Debug(cli.INFO, "Preparing DMG", p.Name)
+	cfg, diags := hcldec.Decode(p.Config, dmgSpec, evalContext)
 	if len(diags) != 0 {
 		for _, diag := range diags {
 			cli.Debug(cli.INFO, "\t#", diag)
@@ -86,7 +85,7 @@ func (d *Dmg) Parse(evalContext *hcl.EvalContext) error {
 		return fmt.Errorf("%s", diags.Errs()[0])
 	}
 
-	err := d.Populate(cfg, d)
+	err := p.Populate(cfg, p)
 	if err != nil {
 		return err
 	}
@@ -95,38 +94,43 @@ func (d *Dmg) Parse(evalContext *hcl.EvalContext) error {
 }
 
 // Bake will perform the DMG installation
-func (d *Dmg) Bake() {
+func (p *Dmg) Bake() {
 	// Rsync the app from the mounted DMG to the destination folder
-	var appName = d.Name
-	if d.App != nil {
-		appName = *d.App
+	var appName = p.Name
+	if p.App != nil {
+		appName = *p.App
 	}
 	// Sets the app name with the .app extension
 	var appNameWithExt = appName + ".app"
 
-	u, err := url.Parse(d.Source)
+	if FileExists(p.GetDestination() + appNameWithExt) {
+		cli.Debug(cli.INFO, "\t-> Package already exists", p.GetDestination()+appNameWithExt)
+		return
+	}
+
+	u, err := url.Parse(p.Source)
 	if err != nil {
-		cli.Debug(cli.INFO, fmt.Sprintf("Error finding source %s", d.Source), err)
+		cli.Debug(cli.INFO, fmt.Sprintf("Error finding source %s", p.Source), err)
 	}
 
 	var tmpFile string
 	if u.Scheme == "http" || u.Scheme == "https" {
 		cli.Debug(cli.DEBUG, "\t-> Using HTTP(s) source for download", nil)
 
-		urlParse, urlErr := url.Parse(d.Source)
+		urlParse, urlErr := url.Parse(p.Source)
 		if err != nil {
-			cli.Debug(cli.INFO, fmt.Sprintf("Error finding source %s", d.Source), urlErr)
+			cli.Debug(cli.INFO, fmt.Sprintf("Error finding source %s", p.Source), urlErr)
 		}
 
 		tmpFile = config.Registry.TempDir + "/" + path.Base(urlParse.Path)
-		urlErr = DownloadFile(d.Source, tmpFile, d.Checksum)
+		urlErr = DownloadFile(p.Source, tmpFile, p.Checksum)
 		if urlErr != nil {
-			cli.Debug(cli.INFO, fmt.Sprintf("Error downloading file %s", d.Source), urlErr)
+			cli.Debug(cli.INFO, fmt.Sprintf("Error downloading file %s", p.Source), urlErr)
 		}
 	}
 
 	// Mount it
-	var mountpoint = fmt.Sprintf("/Volumes/%s", d.Name)
+	var mountpoint = fmt.Sprintf("/Volumes/%s", p.Name)
 	var hdiutilBinary = "/usr/bin/hdiutil"
 	var mountCmd = []string{
 		hdiutilBinary,
@@ -155,8 +159,8 @@ func (d *Dmg) Bake() {
 		"--group",
 		"--times",
 		fmt.Sprintf("%s/%s", mountpoint, appNameWithExt),
-		d.GetDestination()}
-	cli.Debug(cli.INFO, fmt.Sprintf("Installing %s to %s", tmpFile, d.GetDestination()), err)
+		p.GetDestination()}
+	cli.Debug(cli.INFO, fmt.Sprintf("Installing %s to %s", tmpFile, p.GetDestination()), err)
 	cli.Debug(cli.DEBUG2, fmt.Sprintf("\t-> Install command: %s", strings.Join(installCmd, " ")), err)
 	r, err = RunCommand(installCmd)
 	if err != nil {

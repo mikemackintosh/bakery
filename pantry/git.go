@@ -26,7 +26,6 @@ type Git struct {
 	Destination *string  `json:"destination"`
 	Branch      *string  `json:"branch"`
 	Recursive   bool     `json:"recursive"`
-	DependsOn   []string `json:"depends_on"`
 }
 
 // Identifies the git spec

@@ -27,7 +27,6 @@ type Zip struct {
 	Source      string   `json:"source"`
 	Checksum    *string  `json:"checksum"`
 	Destination string   `json:"destination"`
-	DependsOn   []string `json:"depends_on"`
 }
 
 // Identifies the zip spec

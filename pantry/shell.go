@@ -22,10 +22,9 @@ import (
 
 type Shell struct {
 	PantryItem
-	Name      string   `hcl:"name,label"`
-	Config    hcl.Body `hcl:",remain"`
-	Script    string   `json:"script"`
-	DependsOn []string `json:"depends_on"`
+	Name   string   `hcl:"name,label"`
+	Config hcl.Body `hcl:",remain"`
+	Script string   `json:"script"`
 }
 
 // identifies the DMG spec
@@ -39,9 +38,9 @@ var shellSpec = &hcldec.ObjectSpec{
 }
 
 //
-func (d *Shell) Parse(evalContext *hcl.EvalContext) error {
-	cli.Debug(cli.INFO, "Preparing Shell", d.Name)
-	cfg, diags := hcldec.Decode(d.Config, shellSpec, evalContext)
+func (p *Shell) Parse(evalContext *hcl.EvalContext) error {
+	cli.Debug(cli.INFO, "Preparing Shell", p.Name)
+	cfg, diags := hcldec.Decode(p.Config, shellSpec, evalContext)
 	if len(diags) != 0 {
 		for _, diag := range diags {
 			cli.Debug(cli.INFO, "\t#", diag)
@@ -49,7 +48,7 @@ func (d *Shell) Parse(evalContext *hcl.EvalContext) error {
 		return fmt.Errorf("%s", diags.Errs()[0])
 	}
 
-	err := d.Populate(cfg, d)
+	err := p.Populate(cfg, p)
 	if err != nil {
 		return err
 	}
@@ -57,9 +56,9 @@ func (d *Shell) Parse(evalContext *hcl.EvalContext) error {
 	return nil
 }
 
-func (d *Shell) Bake() {
-	var tmpFile = config.Registry.TempDir + fmt.Sprintf("/%x.sh", sha256.Sum256([]byte(d.Script)))[:14]
-	err := ioutil.WriteFile(tmpFile, []byte(d.Script), 0744)
+func (p *Shell) Bake() {
+	var tmpFile = config.Registry.TempDir + fmt.Sprintf("/%x.sh", sha256.Sum256([]byte(p.Script)))[:14]
+	err := ioutil.WriteFile(tmpFile, []byte(p.Script), 0744)
 	if err != nil {
 		cli.Debug(cli.ERROR, fmt.Sprintf("Error writing script to %s", tmpFile), err)
 	}

@@ -14,11 +14,18 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+var runList = &Runlist{
+	Items: map[string]pantry.PantryInterface{},
+	// CompletedItems: map[string]pantry.PantryInterface{},
+}
+
+// Variable contains variables
 type Variable struct {
 	Name    string         `hcl:"name,label"`
 	Default hcl.Attributes `hcl:"default,remain"`
 }
 
+// Bakery is the parent struct
 type Bakery struct {
 	Variables []*Variable     `hcl:"variable,block"`
 	Dmgs      []*pantry.Dmg   `hcl:"dmg,block"`
@@ -28,10 +35,14 @@ type Bakery struct {
 	Gits      []*pantry.Git   `hcl:"git,block"`
 }
 
-type Runlist map[string]interface{}
+// Runlist contains a list of items
+type Runlist struct {
+	Items map[string]pantry.PantryInterface
+}
 
+// Add adds an item to the Item list
 func (rl *Runlist) Add(name string, pi pantry.PantryInterface) {
-	(*rl)[name] = pi
+	rl.Items[name] = pi
 }
 
 func main() {
@@ -94,45 +105,85 @@ func main() {
 		},
 	}
 
-	var runList = &Runlist{}
 	/*
 		rootVal := reflect.ValueOf(bakery)
 		for i := 0; i < rootVal.NumField(); i++ {
-			valueField := rootVal.Field(i)
-			typeField := rootVal.Type().Field(i)
-			typeField.Name
+			// This is available in 1.12beta2
+			for _, entry := range rootVal.MapRange() {
+				err = entry.Parse(evalContext)
+				if err != nil {
+					cli.ErrorAndExit(err)
+				}
+				runList.Add(entry.Name, entry)
+			}
 		}
 	*/
 
 	for _, entry := range bakery.Dmgs {
-		entry.Parse(evalContext)
+		err = entry.Parse(evalContext)
+		if err != nil {
+			cli.ErrorAndExit(err)
+		}
 		runList.Add(entry.Name, entry)
 	}
 
 	for _, entry := range bakery.Shells {
-		entry.Parse(evalContext)
+		err = entry.Parse(evalContext)
+		if err != nil {
+			cli.ErrorAndExit(err)
+		}
 		runList.Add(entry.Name, entry)
 	}
 
 	for _, entry := range bakery.Pkgs {
-		entry.Parse(evalContext)
+		err = entry.Parse(evalContext)
+		if err != nil {
+			cli.ErrorAndExit(err)
+		}
 		runList.Add(entry.Name, entry)
 	}
 
 	for _, entry := range bakery.Zips {
-		entry.Parse(evalContext)
+		err = entry.Parse(evalContext)
+		if err != nil {
+			cli.ErrorAndExit(err)
+		}
 		runList.Add(entry.Name, entry)
 	}
 
 	for _, entry := range bakery.Gits {
-		entry.Parse(evalContext)
+		err = entry.Parse(evalContext)
+		if err != nil {
+			cli.ErrorAndExit(err)
+		}
 		runList.Add(entry.Name, entry)
 	}
 
-	for name, module := range *runList {
-		cli.Debug(cli.INFO, "Baking", name)
-		module.(pantry.PantryInterface).Bake()
+	for name, module := range runList.Items {
+		err := RunItem(name, module)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
-// func checkIfDepends()
+// RunItem will perform dependency validation and perform the action
+func RunItem(name string, module pantry.PantryInterface) error {
+	if !module.Ready() {
+		deps := module.GetDependencies()
+		if len(deps) > 0 {
+			for _, k := range deps {
+				if !runList.Items[k].Ready() {
+					fmt.Printf("%s has an Unmet dependency: %s, running now\n", name, k)
+					RunItem(k, runList.Items[k])
+				}
+			}
+		}
+
+		cli.Debug(cli.INFO, "Baking", name)
+		// TODO: Update to Bake() error
+		module.(pantry.PantryInterface).Bake()
+		module.Baked()
+	}
+	return nil
+}
