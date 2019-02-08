@@ -18,6 +18,8 @@ type PantryInterface interface {
 	Baked()
 	Ready() bool
 	GetDependencies() []string
+	ValidateNotIf() bool
+	ValidateOnlyIf() bool
 }
 
 var dependsOn = &hcldec.AttrSpec{
@@ -98,4 +100,41 @@ func (p *PantryItem) Populate(cfg cty.Value, obj interface{}) error {
 
 	cli.Debug(cli.DEBUG2, "\t#=> Resulting Object", obj)
 	return nil
+}
+
+// ValidateNotIf returns true if met, or false if criteria failes
+func (p *PantryItem) ValidateNotIf() bool {
+	// TODO: clean this up and refactor it to make it re-usable
+	if p.NotIf != nil {
+		o, err := RunCommand([]string{"sh", "-c", *p.NotIf})
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("\t-> Error running not_if %s, response: %s", *p.NotIf, o.FormattedString()), err)
+			return true
+		}
+
+		if o.ExitCode == 0 {
+			cli.Debug(cli.INFO, "\t-> Skipping due to matched not_if", nil)
+			return true
+		}
+	}
+
+	return false
+}
+
+// ValidateOnlyIf returns true if met, or false if criteria failes
+func (p *PantryItem) ValidateOnlyIf() bool {
+	if p.OnlyIf != nil {
+		o, err := RunCommand([]string{"sh", "-c", *p.OnlyIf})
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("\t-> Error running only_if %s, response: %s", *p.NotIf, o.FormattedString()), err)
+			return true
+		}
+
+		if o.ExitCode != 0 {
+			cli.Debug(cli.INFO, "\t-> Skipping due to matched only_if", nil)
+			return true
+		}
+	}
+
+	return false
 }

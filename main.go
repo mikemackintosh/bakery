@@ -174,15 +174,24 @@ func RunItem(name string, module pantry.PantryInterface) error {
 		if len(deps) > 0 {
 			for _, k := range deps {
 				if !runList.Items[k].Ready() {
-					fmt.Printf("%s has an Unmet dependency: %s, running now\n", name, k)
+					cli.Debug(cli.INFO, fmt.Sprintf("%s has an Unmet dependency: %s, running now\n", name, k), nil)
 					RunItem(k, runList.Items[k])
 				}
 			}
 		}
 
 		cli.Debug(cli.INFO, "Baking", name)
-		// TODO: Update to Bake() error
-		module.(pantry.PantryInterface).Bake()
+		m := module.(pantry.PantryInterface)
+
+		if m.ValidateOnlyIf() {
+			return nil
+		}
+
+		if m.ValidateNotIf() {
+			return nil
+		}
+
+		m.Bake()
 		module.Baked()
 	}
 	return nil
