@@ -44,6 +44,11 @@ var defaultSpec = &hcldec.ObjectSpec{
 		Required: false,
 		Type:     cty.String,
 	},
+	"sudo": &hcldec.AttrSpec{
+		Name:     "sudo",
+		Required: false,
+		Type:     cty.Bool,
+	},
 }
 
 // NewPantrySpec appends the default spec fields to a pantry item spec
@@ -61,6 +66,7 @@ type PantryItem struct {
 	DependsOn string  `json:"depends_on"`
 	NotIf     *string `json:"not_if"`
 	OnlyIf    *string `json:"only_if"`
+	Sudo      bool    `json:"sudo"`
 	IsPrepped bool
 	IsBaked   bool
 }
