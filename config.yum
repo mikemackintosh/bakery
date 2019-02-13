@@ -10,6 +10,21 @@ xcodebuild -license accept
 EOT
 }
 
+shell "Install Homebrew" {
+  script = <<EOT
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+EOT
+  not_if = "/usr/bin/which brew"
+}
+
+brew "jp2a" {
+  action = "upgrade"
+}
+
+brew "tmux" {
+  action = "install"
+}
+
 // Download and install the Alfred 3 dmg image
 dmg "Alfred 3" {
   source = "https://cachefly.alfredapp.com/Alfred_3.8_959.dmg"
@@ -30,9 +45,34 @@ zip "Dash" {
   not_if = "ls -la /Applications/ | grep 'Dash.app'"
 }
 
+// Install iTerm from their website (.app bundle within the zip)
+zip "iTerm" {
+  source = "https://iterm2.com/downloads/stable/iTerm2-3_1_7.zip"
+  checksum = "d5496b3c42fe2eaf65befef7d6d6682cde3e8cd1f042f63343f821e8582b1ede"
+  destination = "/Applications/"
+  not_if = "ls -la /Applications/ | grep 'iTerm.app'"
+}
+
+
+// Install Atom from their website (.app bundle within the zip)
+zip "Atom" {
+  source = "https://atom-installer.github.com/v1.34.0/atom-mac.zip?ext=.zip"
+  checksum = "9fd19bd6b6f2ceaae0e5e4004f617444ae226cb896f701a151018feb07d5857a"
+  destination = "/Applications/"
+  not_if = "ls -la /Applications/ | grep 'Atom.app'"
+}
+
+// Install Docker from their website's DMG
+dmg "Docker" {
+  source = "https://download.docker.com/mac/stable/Docker.dmg"
+  checksum = "a06307d8da9c3778b183786cb87037ed3b7226d36ebc978fd40aa90851c0a04e"
+}
+
 git "dotfiles" {
   source = "https://github.com/mikemackintosh/dotfiles"
   destination = "~/.dotfiles_test"
   branch = "master"
   depends_on = "Accept Xcode License"
+  path = "/usr/bin/git"
+  user = "self"
 }
