@@ -33,6 +33,7 @@ type Bakery struct {
 	Shells    []*pantry.Shell `hcl:"shell,block"`
 	Zips      []*pantry.Zip   `hcl:"zip,block"`
 	Gits      []*pantry.Git   `hcl:"git,block"`
+	Brews     []*pantry.Brew  `hcl:"brew,block"`
 }
 
 // Runlist contains a list of items
@@ -152,6 +153,14 @@ func main() {
 	}
 
 	for _, entry := range bakery.Gits {
+		err = entry.Parse(evalContext)
+		if err != nil {
+			cli.ErrorAndExit(err)
+		}
+		runList.Add(entry.Name, entry)
+	}
+
+	for _, entry := range bakery.Brews {
 		err = entry.Parse(evalContext)
 		if err != nil {
 			cli.ErrorAndExit(err)
