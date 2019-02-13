@@ -63,6 +63,10 @@ func (p *Brew) Bake() {
 	switch p.Action {
 	case "install":
 		verb = "install"
+		if FileExists("/usr/local/Cellar/" + p.Name) {
+			cli.Debug(cli.INFO, "\t-> Skipping, already installed - Did you mean 'upgrade'?", nil)
+			return
+		}
 	case "upgrade":
 		verb = "upgrade"
 	case "remove":
