@@ -144,6 +144,7 @@ func (p *Dmg) Bake() {
 		"-nobrowse",
 		"-mountpoint",
 		mountpoint}
+
 	cli.Debug(cli.INFO, fmt.Sprintf("Mounting %s", tmpFile), err)
 	cli.Debug(cli.DEBUG2, fmt.Sprintf("\t-> Install command: %#v", strings.Join(mountCmd, " ")), err)
 	r, err := RunCommand(mountCmd)
@@ -174,7 +175,12 @@ func (p *Dmg) Bake() {
 	cli.Debug(cli.DEBUG2, fmt.Sprintf("\t-> Install command response: \n%s", r.FormattedString()), err)
 
 	// unmount the DMG after copying it over
-	_, err = RunCommand([]string{hdiutilBinary, "unmount", mountpoint})
+	var unmountCommand = []string{
+		hdiutilBinary,
+		"unmount",
+		mountpoint,
+	}
+	_, err = RunCommand(unmountCommand)
 	if err != nil {
 		cli.Debug(cli.INFO, "Error unmounting", err)
 	}

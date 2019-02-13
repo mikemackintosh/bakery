@@ -64,12 +64,30 @@ func (p *Shell) Bake() {
 
 	cli.Debug(cli.INFO, fmt.Sprintf("\t-> Running script %s", tmpFile), err)
 
-	o, err := RunCommand([]string{
+	var cmd = []string{
 		"/bin/bash",
 		"-c",
-		tmpFile})
-	if err != nil {
-		cli.Debug(cli.ERROR, fmt.Sprintf("Error running %s", tmpFile), err)
+		tmpFile}
+
+	var o *CommandResponse
+	if p.User != nil {
+
+		uid, gid, err := GetUIDAndGID(*p.User)
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("Error getting user data, %s", err), err)
+		}
+
+		o, err = RunCommandAsUser(cmd, uid, gid)
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("Error running %s", tmpFile), err)
+		}
+
+	} else {
+
+		o, err = RunCommand(cmd)
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("Error running %s", tmpFile), err)
+		}
 	}
 
 	if len(o.String()) == 0 {
@@ -149,6 +167,43 @@ func copyOutputAndCapture(w io.Writer, r io.Reader, prefix string, c color.Attri
 var TestRunCommandOutput = `Result
 FOO:BAR`
 
+// RunCommandAsUser returns true if the audit passed, or command was successful
+func RunCommandAsUser(cmdArgs []string, uid, gid uint32) (*CommandResponse, error) {
+	var exitCode int
+
+	if os.Getenv("GO_WANT_HELPER_PROCESS") == "1" {
+		return &CommandResponse{
+			Command: nil,
+			Raw:     TestRunCommandOutput,
+		}, nil
+	}
+
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:len(cmdArgs)]...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{}
+	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uid, Gid: gid}
+
+	res, err := cmd.CombinedOutput()
+	if err != nil {
+		// try to get the exit code
+		if exitError, ok := err.(*exec.ExitError); ok {
+			ws := exitError.Sys().(syscall.WaitStatus)
+			exitCode = ws.ExitStatus()
+		} else {
+			exitCode = 1
+		}
+	} else {
+		// success, exitCode should be 0 if go is ok
+		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
+		exitCode = ws.ExitStatus()
+	}
+
+	return &CommandResponse{
+		Command:  cmd,
+		Raw:      strings.TrimSpace(string(res)),
+		ExitCode: exitCode,
+	}, err
+}
+
 // RunCommand returns true if the audit passed, or command was successful
 func RunCommand(cmdArgs []string) (*CommandResponse, error) {
 	var exitCode int
@@ -187,7 +242,7 @@ func (r *CommandResponse) String() string {
 	return r.Raw
 }
 
-// FoormattedString returns an intented, formatted string
+// FormattedString returns an intented, formatted string
 func (r *CommandResponse) FormattedString() string {
 	var rx = regexp.MustCompile("(?m)^")
 	return rx.ReplaceAllString(r.Raw, "\t\t")

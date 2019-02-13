@@ -4,7 +4,6 @@ package pantry
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"strings"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/mikemackintosh/bakery/cli"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/zclconf/go-cty/cty"
-	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 // Git is a git object
@@ -24,6 +21,7 @@ type Git struct {
 	Config      hcl.Body `hcl:",remain"`
 	Source      string   `json:"source"`
 	Destination *string  `json:"destination"`
+	Path        *string  `json:"path"`
 	Branch      *string  `json:"branch"`
 	Recursive   bool     `json:"recursive"`
 }
@@ -49,6 +47,11 @@ var gitSpec = NewPantrySpec(&hcldec.ObjectSpec{
 		Name:     "recursive",
 		Required: false,
 		Type:     cty.Bool,
+	},
+	"path": &hcldec.AttrSpec{
+		Name:     "path",
+		Required: false,
+		Type:     cty.String,
 	},
 })
 
@@ -91,23 +94,60 @@ func (p *Git) Bake() {
 		return
 	}
 
-	// Set the default options
-	var options = &git.CloneOptions{
-		URL:      p.Source,
-		Progress: os.Stdout,
+	var gitBin = "git"
+	if p.Path != nil {
+		gitBin = *p.Path
 	}
 
+	gitCmd := []string{
+		gitBin,
+		"clone",
+		"--progress",
+		p.Source,
+		destination,
+	}
 	// If we want a specific branch, set it here
 	if p.Branch != nil && len(*p.Branch) > 0 {
-		options.ReferenceName = plumbing.NewBranchReferenceName(*p.Branch)
+		gitCmd = append(gitCmd, []string{"-b", *p.Branch}...)
 	}
 
 	if p.Recursive {
-		options.RecurseSubmodules = git.DefaultSubmoduleRecursionDepth
+		gitCmd = append(gitCmd, "--recursive")
 	}
+	var o *CommandResponse
+	if p.User != nil {
 
-	_, err = git.PlainClone(destination, false, options)
-	if err != nil {
-		cli.Debug(cli.ERROR, "\t-> Error cloning: ", err)
+		uid, gid, err := GetUIDAndGID(*p.User)
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("Error getting user data, %s", err), err)
+		}
+
+		o, err = RunCommandAsUser(gitCmd, uid, gid)
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("Error running %s", err), nil)
+		}
+
+	} else {
+
+		o, err = RunCommand(gitCmd)
+		if err != nil {
+			cli.Debug(cli.ERROR, fmt.Sprintf("Error running %s", err), nil)
+		}
 	}
+	fmt.Printf("%+v", o)
+	/*
+		// Set the default options
+		var options = &git.CloneOptions{
+			URL:      p.Source,
+			Progress: os.Stdout,
+		}
+	*/
+
+	/*
+		_, err = git.PlainClone(destination, false, options)
+		if err != nil {
+			cli.Debug(cli.ERROR, "\t-> Error cloning: ", err)
+		}
+	*/
+
 }

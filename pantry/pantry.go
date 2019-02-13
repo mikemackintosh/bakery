@@ -44,10 +44,10 @@ var defaultSpec = &hcldec.ObjectSpec{
 		Required: false,
 		Type:     cty.String,
 	},
-	"sudo": &hcldec.AttrSpec{
-		Name:     "sudo",
+	"user": &hcldec.AttrSpec{
+		Name:     "user",
 		Required: false,
-		Type:     cty.Bool,
+		Type:     cty.String,
 	},
 }
 
@@ -66,7 +66,7 @@ type PantryItem struct {
 	DependsOn string  `json:"depends_on"`
 	NotIf     *string `json:"not_if"`
 	OnlyIf    *string `json:"only_if"`
-	Sudo      bool    `json:"sudo"`
+	User      *string `json:"user"`
 	IsPrepped bool
 	IsBaked   bool
 }
