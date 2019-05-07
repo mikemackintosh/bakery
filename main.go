@@ -55,11 +55,10 @@ func main() {
 	var err error
 	var file *hcl.File
 	var diags hcl.Diagnostics
+	var p = hclparse.NewParser()
 
 	// Override the config registry
 	config.Registry.TempDir = cli.FlagTempDir
-
-	p := hclparse.NewParser()
 
 	if cli.FlagBundle {
 		// find a rice.Box
