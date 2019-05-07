@@ -3,8 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"reflect"
 
+	rice "github.com/GeertJohan/go.rice"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hclparse"
@@ -34,6 +37,7 @@ type Bakery struct {
 	Zips      []*pantry.Zip   `hcl:"zip,block"`
 	Gits      []*pantry.Git   `hcl:"git,block"`
 	Brews     []*pantry.Brew  `hcl:"brew,block"`
+	Fonts     []*pantry.Font  `hcl:"font,block"`
 }
 
 // Runlist contains a list of items
@@ -48,28 +52,45 @@ func (rl *Runlist) Add(name string, pi pantry.PantryInterface) {
 
 func main() {
 	flag.Parse()
+	var err error
+	var file *hcl.File
+	var diags hcl.Diagnostics
 
-	// Load the configuration file
-	err := config.NewFromFile(cli.FlagConfig)
-	if err != nil {
-		cli.ErrorAndExit(err)
-	}
+	// Override the config registry
+	config.Registry.TempDir = cli.FlagTempDir
 
-	// Make the temp file directory
-	// TODO: refactor this out
-	err = os.MkdirAll(config.Registry.TempDir, 0755)
-	if err != nil {
-		cli.ErrorAndExit(err)
-	}
-
-	// Start parsing
 	p := hclparse.NewParser()
-	file, diags := p.ParseHCLFile(cli.FlagRecipe)
+
+	if cli.FlagBundle {
+		// find a rice.Box
+		templateBox, err := rice.FindBox("recipes")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// get file contents as string
+		templateString, err := templateBox.String("config.yum")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		file, diags = p.ParseHCL([]byte(templateString), "config.yum")
+	} else {
+		file, diags = p.ParseHCLFile(cli.FlagRecipe)
+	}
+
 	if len(diags) != 0 {
 		for _, diag := range diags {
 			fmt.Printf("- %s\n", diag)
 		}
 		return
+	}
+
+	// Make the temp file directory
+	// TODO: refactor this out
+	err = os.MkdirAll(cli.FlagTempDir, 0755)
+	if err != nil {
+		cli.ErrorAndExit(err)
 	}
 
 	body := file.Body
@@ -106,66 +127,20 @@ func main() {
 		},
 	}
 
-	/*
-		rootVal := reflect.ValueOf(bakery)
-		for i := 0; i < rootVal.NumField(); i++ {
-			// This is available in 1.12beta2
-			for _, entry := range rootVal.MapRange() {
-				err = entry.Parse(evalContext)
-				if err != nil {
-					cli.ErrorAndExit(err)
-				}
-				runList.Add(entry.Name, entry)
+	rootVal := reflect.ValueOf(bakery)
+	for i := 0; i < rootVal.NumField(); i++ {
+		//fmt.Printf("%+v: %+v\n", i, rootVal.Type().Field(i).Name)
+		for sliceinc := 0; sliceinc < rootVal.Field(i).Len(); sliceinc++ {
+			//name := reflect.Indirect(rootVal.Field(i).Index(sliceinc)).FieldByName("Name")
+			entry := rootVal.Field(i).Index(sliceinc)
+			params := []reflect.Value{reflect.ValueOf(evalContext)}
+			r := entry.MethodByName("Parse").Call(params)
+			if len(r) > 0 && r[0].Interface() != nil {
+				cli.ErrorAndExit(fmt.Errorf("%v", r[0].Interface()))
 			}
-		}
-	*/
 
-	for _, entry := range bakery.Dmgs {
-		err = entry.Parse(evalContext)
-		if err != nil {
-			cli.ErrorAndExit(err)
+			runList.Add(entry.Elem().FieldByName("Name").String(), entry.Interface().(pantry.PantryInterface))
 		}
-		runList.Add(entry.Name, entry)
-	}
-
-	for _, entry := range bakery.Shells {
-		err = entry.Parse(evalContext)
-		if err != nil {
-			cli.ErrorAndExit(err)
-		}
-		runList.Add(entry.Name, entry)
-	}
-
-	for _, entry := range bakery.Pkgs {
-		err = entry.Parse(evalContext)
-		if err != nil {
-			cli.ErrorAndExit(err)
-		}
-		runList.Add(entry.Name, entry)
-	}
-
-	for _, entry := range bakery.Zips {
-		err = entry.Parse(evalContext)
-		if err != nil {
-			cli.ErrorAndExit(err)
-		}
-		runList.Add(entry.Name, entry)
-	}
-
-	for _, entry := range bakery.Gits {
-		err = entry.Parse(evalContext)
-		if err != nil {
-			cli.ErrorAndExit(err)
-		}
-		runList.Add(entry.Name, entry)
-	}
-
-	for _, entry := range bakery.Brews {
-		err = entry.Parse(evalContext)
-		if err != nil {
-			cli.ErrorAndExit(err)
-		}
-		runList.Add(entry.Name, entry)
 	}
 
 	for name, module := range runList.Items {
