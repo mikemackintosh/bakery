@@ -5,3 +5,7 @@ pantry:
 
 build:
 	go build -o bin/bakery main.go
+
+build-complete:
+	rice embed-go
+	make build

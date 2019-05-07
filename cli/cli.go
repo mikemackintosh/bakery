@@ -10,6 +10,7 @@ import (
 var (
 	FlagConfig    string
 	FlagRecipe    string
+	FlagTempDir   string
 	FlagBundle    bool
 	FlagDebug     bool
 	FlagVerbosity int
@@ -44,6 +45,7 @@ type Severity struct {
 func init() {
 	flag.StringVar(&FlagConfig, "c", "manifest.yml", "Configuration file")
 	flag.StringVar(&FlagRecipe, "r", "config.yum", "Client recipe file")
+	flag.StringVar(&FlagTempDir, "-temp-dir", " /var/bakery/tmp", "Temporary resource directory")
 	flag.BoolVar(&FlagBundle, "b", false, "Bundle client config with binary")
 	flag.BoolVar(&FlagDebug, "d", false, "When enabled, turns on debugging")
 	flag.IntVar(&FlagVerbosity, "v", 1, "Sets output verbosity level")
