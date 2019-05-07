@@ -17,13 +17,11 @@ import (
 // Git is a git object
 type Git struct {
 	PantryItem
-	Name        string   `hcl:"name,label"`
-	Config      hcl.Body `hcl:",remain"`
-	Source      string   `json:"source"`
-	Destination *string  `json:"destination"`
-	Path        *string  `json:"path"`
-	Branch      *string  `json:"branch"`
-	Recursive   bool     `json:"recursive"`
+	Source      string  `json:"source"`
+	Destination *string `json:"destination"`
+	Path        *string `json:"path"`
+	Branch      *string `json:"branch"`
+	Recursive   bool    `json:"recursive"`
 }
 
 // Identifies the git spec

@@ -17,11 +17,9 @@ import (
 // Zip is a zip object
 type Font struct {
 	PantryItem
-	Name        string   `hcl:"name,label"`
-	Config      hcl.Body `hcl:",remain"`
-	Source      string   `json:"source"`
-	Checksum    *string  `json:"checksum"`
-	Destination string   `json:"destination"`
+	Source      string  `json:"source"`
+	Checksum    *string `json:"checksum"`
+	Destination string  `json:"destination"`
 }
 
 // Identifies the font spec
@@ -65,7 +63,7 @@ func (p *Font) Bake() {
 	}
 
 	var tmpFile string
-	if u.Scheme == "http" || u.Scheme == "https" {
+	if u.Scheme == ProtocolHTTP || u.Scheme == ProtocolHTTPS {
 		cli.Debug(cli.DEBUG, "\t-> Using HTTP(s) source for download", nil)
 
 		urlParse, urlErr := url.Parse(p.Source)

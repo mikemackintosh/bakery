@@ -14,8 +14,6 @@ import (
 // Pkg is a pkg object
 type Pkg struct {
 	PantryItem
-	Name   string   `hcl:"name,label"`
-	Config hcl.Body `hcl:",remain"`
 }
 
 // Identifies the pkg spec

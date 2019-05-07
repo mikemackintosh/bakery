@@ -18,9 +18,7 @@ var brewBin = "/usr/local/bin/brew"
 // Brew is a brew object
 type Brew struct {
 	PantryItem
-	Name   string   `hcl:"name,label"`
-	Config hcl.Body `hcl:",remain"`
-	Action string   `json:"action"`
+	Action string `json:"action"`
 }
 
 // Identifies the brew spec

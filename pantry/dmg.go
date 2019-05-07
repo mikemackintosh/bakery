@@ -16,15 +16,13 @@ import (
 // Dmg is a MacOS DMG object
 type Dmg struct {
 	PantryItem
-	Name           string   `hcl:"name,label"`
-	Config         hcl.Body `hcl:",remain"`
-	App            *string  `json:"app"`
-	Source         string   `json:"source"`
-	Destination    *string  `json:"destination"`
-	Checksum       *string  `json:"checksum"`
-	AcceptEula     bool     `json:"accept_eula"`
-	AllowUntrusted bool     `json:"allow_untrusted"`
-	Force          bool     `json:"force"`
+	App            *string `json:"app"`
+	Source         string  `json:"source"`
+	Destination    *string `json:"destination"`
+	Checksum       *string `json:"checksum"`
+	AcceptEula     bool    `json:"accept_eula"`
+	AllowUntrusted bool    `json:"allow_untrusted"`
+	Force          bool    `json:"force"`
 }
 
 // identifies the DMG spec

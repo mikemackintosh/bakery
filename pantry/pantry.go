@@ -12,6 +12,11 @@ import (
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 )
 
+const (
+	ProtocolHTTP  = "http"
+	ProtocolHTTPS = "https"
+)
+
 type PantryInterface interface {
 	Parse(*hcl.EvalContext) error
 	Bake()
@@ -63,6 +68,9 @@ func NewPantrySpec(spec *hcldec.ObjectSpec) *hcldec.ObjectSpec {
 }
 
 type PantryItem struct {
+	Name   string   `hcl:"name,label"`
+	Config hcl.Body `hcl:",remain"`
+
 	DependsOn string  `json:"depends_on"`
 	NotIf     *string `json:"not_if"`
 	OnlyIf    *string `json:"only_if"`

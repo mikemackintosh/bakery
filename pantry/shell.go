@@ -22,9 +22,7 @@ import (
 
 type Shell struct {
 	PantryItem
-	Name   string   `hcl:"name,label"`
-	Config hcl.Body `hcl:",remain"`
-	Script string   `json:"script"`
+	Script string `json:"script"`
 }
 
 // identifies the DMG spec
