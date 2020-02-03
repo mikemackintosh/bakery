@@ -18,7 +18,7 @@ var (
 	// severityName maps severity const's to string names
 	severityName = []Severity{
 		INFO:    Severity{Name: "INFO", Color: "\033[38;5;45m"},
-		ERROR:   Severity{Name: "ERROR", Color: "\033[38;5;196"},
+		ERROR:   Severity{Name: "ERROR", Color: "\033[38;5;196m"},
 		WARNING: Severity{Name: "WARNING", Color: "\033[38;5;214m"},
 		DEBUG:   Severity{Name: "DEBUG", Color: "\033[38;5;45m"},
 		DEBUG2:  Severity{Name: "DEBUG2", Color: "\033[38;5;45m"},

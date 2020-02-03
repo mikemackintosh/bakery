@@ -17,13 +17,13 @@ var debugOutputTest = []struct {
 	Expected  string
 }{
 	{
-		ERROR, true, "Test", "[ ERROR ] Test\n",
+		ERROR, true, "Test", "\033[0m[  ERROR ] \033[38;5;196mTest\033[0m\n",
 	},
 	{
 		ERROR, false, "Test", "",
 	},
 	{
-		DEBUG, true, "Debug Message", "[ DEBUG ] Debug Message\n",
+		DEBUG, true, "Debug Message", "\033[0m[  DEBUG ] \033[38;5;45mDebug Message\033[0m\n",
 	},
 }
 
