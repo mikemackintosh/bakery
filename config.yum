@@ -25,6 +25,14 @@ brew "tmux" {
   action = "install"
 }
 
+brew "hugo" {
+  action = "install"
+}
+
+brew "go" {
+  action = "install"
+}
+
 // Download and install the Alfred 3 dmg image
 dmg "Alfred 3" {
   source = "https://cachefly.alfredapp.com/Alfred_3.8_959.dmg"
@@ -66,6 +74,16 @@ zip "Atom" {
 dmg "Docker" {
   source = "https://download.docker.com/mac/stable/Docker.dmg"
   checksum = "a06307d8da9c3778b183786cb87037ed3b7226d36ebc978fd40aa90851c0a04e"
+}
+
+font "ubuntu" {
+  source = "https://assets.ubuntu.com/v1/fad7939b-ubuntu-font-family-0.83.zip"
+  checksum = "456d7d42797febd0d7d4cf1b782a2e03680bb4a5ee43cc9d06bda172bac05b42"
+}
+
+font "ibm-plex" {
+  source = "https://github.com/IBM/plex/releases/download/v4.0.2/TrueType.zip"
+  checksum = "e1bfaea0652a35704018337b729ab869fbbc27c2f789e71b128bd66ad389c023"
 }
 
 git "dotfiles" {
