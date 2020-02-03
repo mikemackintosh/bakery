@@ -128,9 +128,7 @@ func main() {
 
 	rootVal := reflect.ValueOf(bakery)
 	for i := 0; i < rootVal.NumField(); i++ {
-		//fmt.Printf("%+v: %+v\n", i, rootVal.Type().Field(i).Name)
 		for sliceinc := 0; sliceinc < rootVal.Field(i).Len(); sliceinc++ {
-			//name := reflect.Indirect(rootVal.Field(i).Index(sliceinc)).FieldByName("Name")
 			entry := rootVal.Field(i).Index(sliceinc)
 			params := []reflect.Value{reflect.ValueOf(evalContext)}
 			r := entry.MethodByName("Parse").Call(params)
