@@ -2,6 +2,7 @@ package pantry
 
 import (
 	"testing"
+	"net/http"
 )
 
 var testDownloadFile = []struct {
@@ -17,7 +18,6 @@ var testDownloadFile = []struct {
 }
 
 func TestDownloadFile(t *testing.T) {
-	/*
 		http.Handle("/test_download.txt", http.FileServer(http.Dir("../testing/fixtures/www")))
 		go http.ListenAndServe("localhost:3000", nil)
 
@@ -27,5 +27,5 @@ func TestDownloadFile(t *testing.T) {
 				t.Errorf("DownloadFile failed with %s", err)
 			}
 		}
-	*/
+
 }

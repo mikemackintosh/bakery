@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/mikemackintosh/bakery/cli"
-	"github.sc-corp.net/Snapchat/ce-wimclasshero/cmd/ui"
 )
 
 // DownloadFile will download the source file (remote) to the dest (local) path
@@ -29,8 +28,8 @@ func DownloadFile(source, destination string, checksum interface{}) error {
 			}
 
 			fileHash := hex.EncodeToString(hash.Sum(nil))
-			if fileHash != *checksum.(*string) {
-				cli.Debug(cli.INFO, fmt.Sprintf("\t-> File with hash %s detected, but want %s, removing...", fileHash, *checksum.(*string)), nil)
+			if fileHash != checksum.(string) {
+				cli.Debug(cli.INFO, fmt.Sprintf("\t-> File with hash %s detected, but want %s, removing...", fileHash, checksum.(string)), nil)
 				err := os.RemoveAll(destination)
 				if err != nil {
 					return fmt.Errorf("Error removing invalidated file: %s", err)
@@ -54,7 +53,6 @@ func DownloadFile(source, destination string, checksum interface{}) error {
 
 	// Check server response
 	if resp.StatusCode != http.StatusOK {
-		//ui.Warning("Error Downloading File: " + err.Error())
 		return fmt.Errorf("Invalid server response")
 	}
 
@@ -62,23 +60,23 @@ func DownloadFile(source, destination string, checksum interface{}) error {
 	fsize, _ := strconv.Atoi(resp.Header.Get("Content-Length"))
 
 	// Create our progress reporter and pass it to be used alongside our writer
-	counter := ui.NewWriteCounter(fsize)
+	counter := cli.NewWriteCounter(fsize)
 	counter.Start()
 
 	// Writer the body to file
 	hash := sha256.New()
 	_, err = io.Copy(io.MultiWriter(hash, out), io.TeeReader(resp.Body, counter))
 	if err != nil {
-		//ui.Warning()
+		//cli.Warning()
 		return fmt.Errorf("Error Downloading File: " + err.Error())
 	}
 
 	counter.Finish()
 
 	fileChecksum := hex.EncodeToString(hash.Sum(nil))
-	if checksum != nil {
-		if *checksum.(*string) != fileChecksum {
-			return fmt.Errorf("Failed to validate file. Want %s but have %s", *checksum.(*string), fileChecksum)
+	if len(checksum.(string)) > 0 {
+		if checksum.(string) != fileChecksum {
+			return fmt.Errorf("Failed to validate file. Want %s but have %s", checksum.(string), fileChecksum)
 		}
 	}
 
