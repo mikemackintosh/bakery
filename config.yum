@@ -1,0 +1,78 @@
+/*
+ * This is an example config.yum file for bakery.
+ */
+
+// Accept the Xcode license first so tools
+// like git work without interuption
+shell "Accept Xcode License" {
+  script = <<EOT
+xcodebuild -license accept
+EOT
+}
+
+shell "Install Homebrew" {
+  script = <<EOT
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+EOT
+  not_if = "/usr/bin/which brew"
+}
+
+brew "jp2a" {
+  action = "upgrade"
+}
+
+brew "tmux" {
+  action = "install"
+}
+
+// Download and install the Alfred 3 dmg image
+dmg "Alfred 3" {
+  source = "https://cachefly.alfredapp.com/Alfred_3.8_959.dmg"
+  checksum = "1dd15f3063913c22a53eea07f8ffb9b02a61d691416df21f61a57537461da4d5"
+}
+
+// Download and install the Google Chrome dmg image
+dmg "Google Chrome" {
+  source = "https://dl.google.com/chrome/mac/stable/CHFA/googlechrome.dmg"
+  checksum = "7f9ae76a661f7b9d40f7e46d5f846d60deefecedebcd5ddc34fba1b05ee2fc6c"
+}
+
+// Install dash from their website (.app bundle within the zip)
+zip "Dash" {
+  source = "https://sanfrancisco.kapeli.com/downloads/v4/Dash.zip"
+  checksum = "802c5a63ac72c94ae4c6481529f11795c35f316d3607c9946f777f447b670c50"
+  destination = "/Applications/"
+  not_if = "ls -la /Applications/ | grep 'Dash.app'"
+}
+
+// Install iTerm from their website (.app bundle within the zip)
+zip "iTerm" {
+  source = "https://iterm2.com/downloads/stable/iTerm2-3_1_7.zip"
+  checksum = "d5496b3c42fe2eaf65befef7d6d6682cde3e8cd1f042f63343f821e8582b1ede"
+  destination = "/Applications/"
+  not_if = "ls -la /Applications/ | grep 'iTerm.app'"
+}
+
+
+// Install Atom from their website (.app bundle within the zip)
+zip "Atom" {
+  source = "https://atom-installer.github.com/v1.34.0/atom-mac.zip?ext=.zip"
+  checksum = "9fd19bd6b6f2ceaae0e5e4004f617444ae226cb896f701a151018feb07d5857a"
+  destination = "/Applications/"
+  not_if = "ls -la /Applications/ | grep 'Atom.app'"
+}
+
+// Install Docker from their website's DMG
+dmg "Docker" {
+  source = "https://download.docker.com/mac/stable/Docker.dmg"
+  checksum = "a06307d8da9c3778b183786cb87037ed3b7226d36ebc978fd40aa90851c0a04e"
+}
+
+git "dotfiles" {
+  source = "https://github.com/mikemackintosh/dotfiles"
+  destination = "~/.dotfiles_test"
+  branch = "master"
+  depends_on = "Accept Xcode License"
+  path = "/usr/bin/git"
+  user = "self"
+}
